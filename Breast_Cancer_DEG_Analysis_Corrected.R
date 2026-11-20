@@ -444,7 +444,172 @@ metadata[
   abline(h = -log10(0.05), lty = 2)
   
   dev.off()
+# Map differential expression results to GPL6480 annotation
   
+  deg_results$PROBEID <- expression_data$ID_REF[
+    as.integer(rownames(deg_results))
+  ]
+  
+  deg_results$SYMBOL <- annotation_data$GENE_SYMBOL[
+    match(deg_results$PROBEID, annotation_data$ID)
+  ]
+  
+  deg_results$GENENAME <- annotation_data$GENE_NAME[
+    match(deg_results$PROBEID, annotation_data$ID)
+  ]
+  
+  deg_results$ENSEMBL_ID <- annotation_data$ENSEMBL_ID[
+    match(deg_results$PROBEID, annotation_data$ID)
+  ]
+  
+  # Save all differential expression results
+  write.csv(
+    deg_results,
+    "GSE22820_All_DEG_Results.csv",
+    row.names = FALSE
+  )
+  
+  # Filter significant probes
+  significant_DEGs <- subset(
+    deg_results,
+    adj.P.Val < 0.05
+  )
+  
+  write.csv(
+    significant_DEGs,
+    "GSE22820_Significant_DEGs.csv",
+    row.names = FALSE
+  )
+  
+  # Separate upregulated and downregulated probes
+  upregulated <- subset(
+    significant_DEGs,
+    logFC > 0
+  )
+  
+  downregulated <- subset(
+    significant_DEGs,
+    logFC < 0
+  )
+  
+  write.csv(upregulated, "GSE22820_Upregulated.csv", row.names = FALSE)
+  write.csv(downregulated, "GSE22820_Downregulated.csv", row.names = FALSE)
+  # Add probe IDs to differential expression results
+  deg_results$PROBEID <- expression_data$ID_REF[
+    as.integer(rownames(deg_results))
+  ]
+  
+  # Add GPL6480 gene annotation
+  deg_results$GENE_SYMBOL <- annotation_data$GENE_SYMBOL[
+    match(deg_results$PROBEID, annotation_data$ID)
+  ]
+  
+  deg_results$GENE_NAME <- annotation_data$GENE_NAME[
+    match(deg_results$PROBEID, annotation_data$ID)
+  ]
+  
+  # Keep significant differentially expressed probes
+  significant_DEGs <- subset(deg_results, adj.P.Val < 0.05)
+  
+  # Keep probes with an annotated gene symbol
+  mapped_DEGs <- subset(
+    significant_DEGs,
+    !is.na(GENE_SYMBOL) & GENE_SYMBOL != ""
+  )
+  
+  # Rank genes by adjusted p-value and retain one row per gene
+  mapped_DEGs <- mapped_DEGs[
+    order(mapped_DEGs$adj.P.Val),
+  ]
+  
+  unique_ranked_genes <- mapped_DEGs[
+    !duplicated(mapped_DEGs$GENE_SYMBOL),
+  ]
+  
+  # Save unique ranked genes
+  write.csv(
+    unique_ranked_genes,
+    "GSE22820_Unique_Ranked_Genes.csv",
+    row.names = FALSE
+  )
+  
+  # Save top 50 candidate genes
+  top50_genes <- head(unique_ranked_genes, 50)
+  
+  write.csv(
+    top50_genes,
+    "GSE22820_Top50_Candidate_Genes.csv",
+    row.names = FALSE
+  )
+  # ==========================================
+  # DRUG-GENE INTERACTION ANALYSIS USING DGIdb
+  # ==========================================
+  
+  # Load DGIdb interaction results
+  drug_data <- read.delim(
+    "C:/Users/Jyotsna/Downloads/gene_interaction_results-20_11_2026.tsv",
+    check.names = FALSE
+  )
+  
+  # Match top 50 candidate genes with drug interactions
+  matched_genes <- merge(
+    top50_genes,
+    drug_data,
+    by.x = "GENE_SYMBOL",
+    by.y = "gene"
+  )
+  
+  # Save all matched drug-gene interactions
+  write.csv(
+    matched_genes,
+    "GSE22820_Matched_Drug_Gene_Interactions.csv",
+    row.names = FALSE
+  )
+  
+  # Extract interactions labelled as approved
+  approved_drugs <- subset(
+    matched_genes,
+    `regulatory approval` == "Approved"
+  )
+  
+  write.csv(
+    approved_drugs,
+    "GSE22820_Approved_Drug_Interactions.csv",
+    row.names = FALSE
+  )
+  # ==========================================
+  # IDENTIFY POTENTIAL ONCOLOGY DRUG MATCHES
+  # ==========================================
+  
+  # Extract unique approved drug-gene interactions
+  approved_summary <- unique(
+    approved_drugs[, c(
+      "GENE_SYMBOL",
+      "drug",
+      "indication",
+      "interaction score"
+    )]
+  )
+  
+  # Identify oncology-related indications
+  oncology_matches <- approved_summary[
+    grepl(
+      "antineoplastic|cancer|neoplasm|oncolog|tumor|tumour",
+      approved_summary$indication,
+      ignore.case = TRUE
+    ),
+  ]
+  
+  # Save potential oncology drug matches
+  write.csv(
+    oncology_matches,
+    "GSE22820_Potential_Oncology_Drug_Matches.csv",
+    row.names = FALSE
+  )
+  
+  # Display results
+  print(oncology_matches)
+    
 
 
 
