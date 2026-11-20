@@ -173,6 +173,14 @@ sum(expr_matrix <= 0, na.rm = TRUE)
 summary(as.vector(expr_matrix))
 log_expr_matrix <- log2(expr_matrix)
 
+
+
+
+
+
+
+
+
 # Summary of log2-transformed expression values
 summary(as.vector(log_expr_matrix))
 
@@ -259,6 +267,16 @@ normal_avg_cor <- rowMeans(normal_cor, na.rm = TRUE)
 
 # Display 5 least-correlated normal samples
 head(sort(normal_avg_cor), 5)
+
+
+
+
+
+
+
+
+
+
 # List the 10 unusual tumour samples
 low_cor_samples <- names(head(sort(tumor_avg_cor), 10))
 
@@ -279,6 +297,10 @@ low_cor_QC[
 metadata[
   match(low_cor_samples, metadata$Sample_ID),
 ]
+
+
+
+  
 
   heatmap(
     sample_cor,
@@ -334,6 +356,13 @@ metadata[
   
   # Percentage explained by first two components
   sum(pca_variance[1:2])
+  
+  
+  
+  
+  
+  
+  
   # Load limma for differential expression analysis
   if (!requireNamespace("BiocManager", quietly = TRUE)) {
     install.packages("BiocManager")
@@ -369,6 +398,11 @@ metadata[
   # View design matrix
   head(design)
   dim(design)
+  
+
+ 
+
+
 
   # Fit linear model
   fit <- lmFit(expr_for_limma, design)
@@ -398,6 +432,8 @@ metadata[
   
   # Check total results
   nrow(deg_results)
+
+
 
   # Significant probes
   sum(deg_results$adj.P.Val < 0.05, na.rm = TRUE)
@@ -444,7 +480,38 @@ metadata[
   abline(h = -log10(0.05), lty = 2)
   
   dev.off()
-# Map differential expression results to GPL6480 annotation
+  
+  # Download and prepare GPL6480 annotation
+  if (!requireNamespace("GEOquery", quietly = TRUE)) {
+    if (!requireNamespace("BiocManager", quietly = TRUE)) {
+      install.packages("BiocManager")
+    }
+    BiocManager::install("GEOquery")
+  }
+  
+  library(GEOquery)
+  
+  gpl6480 <- GEOquery::getGEO("GPL6480")
+  gpl_table <- GEOquery::Table(gpl6480)
+  
+  annotation_data <- gpl_table[, c(
+    "ID",
+    "GENE_SYMBOL",
+    "GENE_NAME",
+    "ENSEMBL_ID"
+  )]
+  
+  annotation_data <- annotation_data[
+    match(expression_data$ID_REF, annotation_data$ID),
+  ]
+  
+  write.csv(
+    annotation_data,
+    "GSE22820_GPL6480_Probe_Annotation.csv",
+    row.names = FALSE
+  )
+  
+  # Map differential expression results to GPL6480 annotation
   
   deg_results$PROBEID <- expression_data$ID_REF[
     as.integer(rownames(deg_results))
@@ -609,7 +676,7 @@ metadata[
   
   # Display results
   print(oncology_matches)
-    
+  
 
 
 
