@@ -173,14 +173,6 @@ sum(expr_matrix <= 0, na.rm = TRUE)
 summary(as.vector(expr_matrix))
 log_expr_matrix <- log2(expr_matrix)
 
-
-
-
-
-
-
-
-
 # Summary of log2-transformed expression values
 summary(as.vector(log_expr_matrix))
 
@@ -267,16 +259,6 @@ normal_avg_cor <- rowMeans(normal_cor, na.rm = TRUE)
 
 # Display 5 least-correlated normal samples
 head(sort(normal_avg_cor), 5)
-
-
-
-
-
-
-
-
-
-
 # List the 10 unusual tumour samples
 low_cor_samples <- names(head(sort(tumor_avg_cor), 10))
 
@@ -297,10 +279,6 @@ low_cor_QC[
 metadata[
   match(low_cor_samples, metadata$Sample_ID),
 ]
-
-
-
-  
 
   heatmap(
     sample_cor,
@@ -356,13 +334,6 @@ metadata[
   
   # Percentage explained by first two components
   sum(pca_variance[1:2])
-  
-  
-  
-  
-  
-  
-  
   # Load limma for differential expression analysis
   if (!requireNamespace("BiocManager", quietly = TRUE)) {
     install.packages("BiocManager")
@@ -398,11 +369,6 @@ metadata[
   # View design matrix
   head(design)
   dim(design)
-  
-
- 
-
-
 
   # Fit linear model
   fit <- lmFit(expr_for_limma, design)
@@ -432,8 +398,6 @@ metadata[
   
   # Check total results
   nrow(deg_results)
-
-
 
   # Significant probes
   sum(deg_results$adj.P.Val < 0.05, na.rm = TRUE)
